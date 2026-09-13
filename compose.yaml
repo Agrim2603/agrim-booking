@@ -1,0 +1,39 @@
+services:
+  app:
+    build: .
+    restart: unless-stopped
+    init: true
+    env_file: .env
+    environment:
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      PORT: '3000'
+      DATA_DIR: /app/data
+      TRUST_PROXY: 'true'
+    ports:
+      - '127.0.0.1:3000:3000'
+    volumes:
+      - booking-data:/app/data
+    security_opt:
+      - no-new-privileges:true
+    cap_drop: [ALL]
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    profiles: [https]
+    ports:
+      - '80:80'
+      - '443:443'
+    environment:
+      SITE_DOMAIN: ${SITE_DOMAIN:-localhost}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      app:
+        condition: service_healthy
+volumes:
+  booking-data:
+  caddy-data:
+  caddy-config:

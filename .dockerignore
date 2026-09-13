@@ -1,0 +1,12 @@
+.git
+.github
+.env
+.env.*
+data
+backups
+node_modules
+tests
+docs
+*.sqlite*
+*.db*
+*.log

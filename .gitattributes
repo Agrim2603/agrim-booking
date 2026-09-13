@@ -1,0 +1,7 @@
+* text=auto
+*.mjs text eol=lf
+*.js text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+Dockerfile text eol=lf
+Caddyfile text eol=lf
