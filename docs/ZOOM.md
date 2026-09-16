@@ -2,12 +2,14 @@
 
 Manual mode works without any credentials: create a meeting in Zoom, paste its participant join URL in the dashboard, and accept the booking. The client sees it on the private confirmation page.
 
+For the free deployment, add the credentials below as **Cloudflare Worker runtime secrets** in Settings → Variables and Secrets. For local Cloudflare development use the ignored `.dev.vars` file; `.env` is used only by the optional Node server. Zoom Basic meetings are limited to 40 minutes; the free calendar defaults to 30-minute consultations. [Zoom free plan](https://www.zoom.com/en/products/virtual-meetings/features/free-video-conferencing/)
+
 ## Connect your own Zoom account
 
 1. In the Zoom App Marketplace, create a **Server-to-Server OAuth** app for the account that will host consultations. Account administrator permission may be required.
 2. Add the meeting creation permission for the intended host user/account. Consult Zoom’s current **Create a meeting** API documentation for the applicable scope; available permissions depend on your app/account configuration.
 3. Activate the app.
-4. Add these values to your hosting environment (or local ignored `.env`):
+4. Add these values to your hosting runtime secrets (or the appropriate ignored local file):
 
 | Variable | Value |
 |---|---|

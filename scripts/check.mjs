@@ -1,7 +1,7 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { join } from 'node:path';
-for (const directory of ['server', 'scripts', 'public', 'tests']) {
+for (const directory of ['server', 'cloudflare', 'scripts', 'public', 'tests']) {
   for (const filename of readdirSync(directory)) {
     if (!/\.(mjs|js)$/.test(filename)) continue;
     const file = join(directory, filename);

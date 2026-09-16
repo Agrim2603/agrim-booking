@@ -14,3 +14,9 @@ coverage/
 Thumbs.db
 *.pem
 *.key
+.dev.vars
+.dev.vars.*
+!.dev.vars.example
+.wrangler/
+.worker-build/
+*.booking-backup.json

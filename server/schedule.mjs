@@ -5,11 +5,16 @@ export const defaults = {
   excludedDates: [], leadHours: 2, horizonDays: 21,
 };
 
+const formatters = new Map();
 export function dateParts(date, timeZone) {
-  return Object.fromEntries(new Intl.DateTimeFormat('en-CA', {
+  if (!formatters.has(timeZone)) {
+    if (formatters.size >= 32) formatters.clear();
+    formatters.set(timeZone, new Intl.DateTimeFormat('en-CA', {
     timeZone, year: 'numeric', month: '2-digit', day: '2-digit',
     hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23',
-  }).formatToParts(date).filter(x => x.type !== 'literal').map(x => [x.type, x.value]));
+    }));
+  }
+  return Object.fromEntries(formatters.get(timeZone).formatToParts(date).filter(x => x.type !== 'literal').map(x => [x.type, x.value]));
 }
 
 export function localToUTC(date, time, timeZone) {
@@ -20,6 +25,7 @@ export function localToUTC(date, time, timeZone) {
   for (let i = 0; i < 3; i++) {
     const p = dateParts(new Date(guess), timeZone);
     const rendered = Date.UTC(+p.year, +p.month - 1, +p.day, +p.hour, +p.minute, +p.second);
+    if (target === rendered) break;
     guess += target - rendered;
   }
   const p = dateParts(new Date(guess), timeZone);

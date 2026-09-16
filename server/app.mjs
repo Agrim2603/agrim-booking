@@ -87,6 +87,7 @@ export async function createApp(config, dependencies = {}) {
       if (path === '/healthz' && method === 'GET') {
         db.prepare('SELECT 1').get(); return send(res, 200, { ok: true });
       }
+      if (path === '/api/live' && method === 'GET') return send(res, 200, { transport: 'sse' });
       if (path === '/api/slots' && method === 'GET') {
         const settings = readSettings(db);
         return send(res, 200, { hostName: settings.hostName, timeZone: settings.timeZone,

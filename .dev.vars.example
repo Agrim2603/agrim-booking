@@ -1,0 +1,8 @@
+# Local Cloudflare development only. Run npm run setup:free to generate a password.
+# Production: set ADMIN_PASSWORD as a Cloudflare Worker secret, not a build variable.
+ADMIN_PASSWORD="replace-with-a-unique-password-at-least-20-characters"
+# Optional server-side Zoom credentials:
+# ZOOM_ACCOUNT_ID=""
+# ZOOM_CLIENT_ID=""
+# ZOOM_CLIENT_SECRET=""
+# ZOOM_HOST_USER_ID=""

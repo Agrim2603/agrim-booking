@@ -1,127 +1,95 @@
-# Agrim Consultation Booking
+# Agrim Consultation Booking — free hosting edition
 
-A complete GitHub repository package for a consultation booking website. Clients request available times; the host accepts requests, adds private notes and provides Zoom meeting links. The app runs on your own computer or on a server connected to your GitHub repository.
+A professional calendar booking website with a private dashboard, approval workflow, private notes, Zoom join links and live updates. The default deployment uses **Cloudflare Workers Free** with a persistent SQLite-backed Durable Object. GitHub stores your code and triggers deployment.
 
-**GitHub stores the source and runs the checks. The included Render configuration runs the live website and its database.** GitHub Pages alone cannot run this server application. A Docker setup is also included for hosting from your own server.
+**Start with [START-HERE.md](START-HERE.md)** for the exact steps to put it online from GitHub. No paid Render server or separate database account is required. The free `workers.dev` address includes HTTPS; a custom domain is optional.
 
-## What works
+## Included
 
-| Feature | Included behavior |
+| Feature | Behavior |
 |---|---|
-| Client booking | Available dates and times, client name/email/topic, pending requests |
-| Private dashboard | Password sign-in, accept/decline/cancel, private meeting notes |
-| Your availability | Edit weekdays, start times, duration, time zone, notice period and blocked dates |
-| Live updates | Server-sent events refresh open pages after a change; 15-second fallback |
-| Double-booking protection | SQLite transaction checks overlapping appointments; pending requests hold the time |
-| Client confirmation | A private link shows acceptance and the Zoom join link, without private notes |
-| Zoom | Paste a meeting link, or configure the optional server credentials to create meetings on acceptance |
-| Persistence | Bookings and settings survive restarts on a persistent local disk |
-| GitHub checks | Syntax, booking integration and privacy tests on Linux and Windows |
-| Deployment | Render Blueprint and Docker/Caddy configurations |
+| Client calendar | View available times in the client's selected time zone and request a consultation |
+| Availability | Edit weekdays, times, blocked dates, duration, notice and booking window |
+| Private dashboard | Password sign-in; accept, decline or cancel; keep meeting notes private |
+| Persistent data | Durable SQLite keeps bookings, settings and notes across normal deployments |
+| Live updates | Hibernating WebSockets update open pages; reconnect and periodic refresh handle interruptions |
+| Booking protection | Availability check and reservation happen in one atomic database transaction |
+| Zoom | Paste a meeting join link, or optionally connect server credentials for automatic creation on acceptance |
+| Client confirmation | Private confirmation URL shows approval and join link without exposing notes |
+| Deployment | Cloudflare configuration and GitHub checks included |
+| Local alternative | Original Node.js/SQLite and Docker self-hosting also remain available |
 
-Automatic email delivery and Google/Outlook calendar synchronization are **not connected**. The dashboard provides a prepared email link you send from your mail app. Availability is managed inside this app; it does not read events from another calendar. Cancelling a booking does not delete a meeting already created in Zoom.
+Availability is managed inside this app. Google/Outlook calendar synchronization and automatic email delivery are not connected. The dashboard prepares an email that you can send from your mail app. The free edition starts with **30-minute** appointments to fit within Zoom Basic's 40-minute meeting limit; you can change the duration in your dashboard. [Zoom's free plan](https://www.zoom.com/en/products/virtual-meetings/features/free-video-conferencing/)
 
-## 1. Run on your computer
+## Monthly hosting cost
 
-Install **Node.js 24 LTS** and Git. Open the extracted project folder in VS Code, then run in its terminal:
+The default setup is **$0 within Cloudflare's Free plan limits**. Remain on Workers Free to keep this setup free. When a free quota is exhausted, the affected service can stop responding until the quota resets or capacity is freed; the app does not purchase an upgrade.
+
+Workers Free currently includes 100,000 dynamic requests per day, with static asset requests free. Durable Objects Free includes 100,000 requests/day, 5 million SQL row reads/day and 100,000 row writes/day, plus storage and compute allowances. These are account-wide limits and are not a number of bookings. GitHub-connected Cloudflare builds include 3,000 minutes/month. [Workers pricing](https://developers.cloudflare.com/workers/platform/pricing/), [Durable Objects pricing](https://developers.cloudflare.com/durable-objects/platform/pricing/), [build limits](https://developers.cloudflare.com/workers/ci-cd/builds/limits-and-pricing/)
+
+Custom domains, paid Zoom features and any upgrades you select are separate. Pricing checked 13 September 2026. See [Cloudflare hosting notes](docs/CLOUDFLARE.md) for maintenance and backups.
+
+## Run the free edition on your computer
+
+Install **Node.js 24 LTS**, open the project folder in VS Code, and run:
 
 ```bash
 npm ci
-npm run setup
-npm start
+npm run setup:free
+npm run dev
 ```
 
-Open **http://localhost:3000**. Your admin dashboard is **http://localhost:3000/dashboard**.
+Open http://localhost:8787 and http://localhost:8787/dashboard. The generated admin password is in your local `.dev.vars` file. This file is ignored by Git. Local data stays under the ignored `.wrangler/` directory, separate from your live data. No Cloudflare login is needed for local development.
 
-`npm run setup` creates an ignored `.env` file with a random admin password. Open that file locally and copy `ADMIN_PASSWORD` into a password manager. The password is never included in the browser bundle or a public API response. Running setup again preserves your existing configuration.
+## GitHub and deployment
 
-Use the exact `localhost` URL above for local sign-in. `PUBLIC_ORIGIN` must match the browser’s origin. Stop the server with `Ctrl+C`.
+Follow [START-HERE.md](START-HERE.md). The repository root must contain `package.json`, `wrangler.jsonc`, `cloudflare/`, `public/` and `.github/`.
 
-The app has no third-party runtime packages and no frontend build step. It uses Node's built-in HTTP, cryptography and SQLite modules. SQLite may show an experimental-feature warning on some Node 24 releases.
+- Build command: `npm run check && npm test`
+- Deploy command: `npm run deploy`
+- Production branch: `main`
+- Worker name: `agrim-consultations`
+- Runtime secret: `ADMIN_PASSWORD` (a unique random password of 20–256 characters)
 
-## 2. Push the whole folder to GitHub
+Cloudflare connects to GitHub and builds/deploys successful commits. `wrangler.jsonc` provisions the SQLite-backed Durable Object automatically on the first deployment. Keep the Worker name, class, binding, migration and `primary-calendar-v1` identity stable after you start using the app: changing them can create a different database.
 
-Create a new empty GitHub repository named `agrim-booking`. For this first push, leave GitHub’s “Add README”, license and `.gitignore` options unchecked; these project files are already included where applicable.
-
-From the extracted project root (the folder containing `package.json`), run:
-
-```bash
-git init
-git add .
-git commit -m "Add consultation booking application"
-git branch -M main
-git remote add origin https://github.com/YOUR-USERNAME/agrim-booking.git
-git push -u origin main
-```
-
-Replace `YOUR-USERNAME` with your GitHub username. Authenticate through GitHub’s normal Git/GitHub Desktop login; do not put tokens in source files.
-
-If you already have a repository, clone it first, copy this package’s contents into that clone, then add/commit/push. Do not copy a nested `.git` directory. This package intentionally contains no Git history or remote credentials.
-
-The `.github/workflows/ci.yml` workflow starts automatically. A successful run confirms the app checks on both operating systems. No deployment or service purchase is made merely by pushing this repository.
-
-## 3. Make it live from GitHub
-
-1. Push the repository and confirm its **Actions** checks pass.
-2. Sign in to Render and connect your GitHub account.
-3. Choose **New → Blueprint**, then select this repository and the `main` branch.
-4. Render reads `render.yaml`. **Review the paid web-service and persistent-disk cost before proceeding.** The disk is needed to keep SQLite bookings across deployments; an ephemeral/free filesystem is not suitable for this configuration.
-5. Enter a new, unique **ADMIN_PASSWORD** of at least 16 characters when prompted. Keep it in Render’s environment settings and your password manager.
-6. Create the Blueprint and wait for deployment. Render supplies an HTTPS website address. Open it and add `/dashboard` to sign in.
-7. Set your actual available hours in **Edit availability**, then share the public address with clients.
-
-Future pushes to `main` deploy when the GitHub checks pass. The application and data are hosted on Render, while you manage the project through GitHub. You can use your own domain later; set `PUBLIC_ORIGIN` to that exact HTTPS origin and redeploy. Use one canonical hostname for sign-in and bookings.
-
-For your own server/home computer, see [Self-hosting](docs/SELF-HOSTING.md). It must stay running and have a reachable HTTPS address for external clients.
-
-## 4. Configure Zoom (optional)
-
-The site works without Zoom credentials. You can paste a participant join link into a booking and accept it. Clients see it on their private confirmation page.
-
-To create a unique meeting automatically when you accept a request, configure the four server variables in [Zoom setup](docs/ZOOM.md). No Zoom API request is made just by running tests or starting the app. Real creation starts when an authenticated host accepts a booking after Zoom is configured.
-
-## Repository layout
-
-```text
-public/             Client page, admin interface, styles and browser code
-server/             HTTP API, authentication, scheduling, SQLite and Zoom integration
-scripts/            Local setup, syntax checks and database backup
-tests/              Booking, security, persistence, live-update and Zoom tests
-docs/               Deployment and Zoom instructions
-.github/workflows/  GitHub checks
-render.yaml         GitHub-connected live deployment
-Dockerfile          Portable application image
-compose.yaml        Persistent Docker deployment with optional HTTPS proxy
-.env.example        Documented server environment values
-```
+GitHub Pages only serves static files, so it cannot run this booking backend. Use the included Cloudflare deployment for the complete app.
 
 ## Commands
 
 | Command | Purpose |
 |---|---|
-| `npm run setup` | Create local configuration without replacing an existing file |
-| `npm start` | Start the website |
-| `npm run dev` | Restart the server when source files change |
-| `npm run check` | Check JavaScript syntax and inline-script policy |
-| `npm test` | Run integration tests in temporary databases |
-| `npm run backup -- /path/to/new-backup.sqlite` | Create a consistent SQLite backup |
+| `npm run setup:free` | Create a local admin password without replacing an existing file |
+| `npm run dev` | Run the free Cloudflare edition locally |
+| `npm run check` | JavaScript and HTML checks |
+| `npm test` | Build the Worker and test both backends locally, without cloud deployment |
+| `npm run test:free` | Build and test the Cloudflare backend only |
+| `npm run deploy:check` | Validate and bundle deployment without publishing |
+| `npm run deploy` | Publish to your signed-in Cloudflare account |
+| `npm run setup` then `npm start` | Run the optional original Node server on port 3000 |
+| `npm run dev:node` | Watch the optional Node server locally |
 
-## Deployment and data notes
+Optional manual deployment: `npx wrangler login`, `npm run deploy`, then `npx wrangler secret put ADMIN_PASSWORD`. The last command prompts privately for the password. These commands use your own Cloudflare account.
 
-- Run **one application process/instance** with one persistent disk. Horizontal scaling requires a shared database and shared event delivery; that is outside this configuration.
-- Do not commit `.env`, credentials, database files or backups. The included ignore rules exclude these files. Store backups securely outside the server and test restoration.
-- The database is initialized and versioned on first startup. Keep it between deployments. New deployments of this exported project start with an empty database; data from the earlier hosted site is not automatically copied.
-- Admin sessions use server-side tokens, HttpOnly cookies, SameSite=Strict, CSRF checks and password verification. Production requires HTTPS and enables secure cookies. Sessions expire after 12 hours and are invalidated on restart.
-- Public availability never includes client names, email addresses or notes. Booking tokens are stored as hashes. The token in a client’s private URL grants access to that booking’s status and join link; clients should not share it publicly.
-- Zoom credentials stay on the server. Tests mock Zoom; a real Zoom account must be connected and checked before using automated meeting creation with clients.
-- GitHub Actions, Docker, Render and live Zoom authorization have not been run in your accounts as part of this export. Local Linux Node 24 checks and integration tests passed; account configuration and a live end-to-end smoke test are still required.
+## Files
 
-## References
+- `cloudflare/`: Free backend, durable database and WebSocket updates.
+- `public/`: Shared client calendar and admin interface.
+- `server/`: Shared scheduling/Zoom helpers and optional standalone Node server.
+- `wrangler.jsonc`: Cloudflare hosting and automatic database provisioning.
+- `.github/workflows/ci.yml`: Linux and Windows Node 24 checks.
+- `docs/`: Free deployment, Zoom, and optional self-hosting instructions.
+- `.dev.vars.example`: Example local Cloudflare secrets; no real credentials.
+- `Dockerfile`, `compose.yaml`: Optional [self-hosting](docs/SELF-HOSTING.md).
 
-- [GitHub Pages is static hosting](https://docs.github.com/en/pages/getting-started-with-github-pages/what-is-github-pages)
-- [Render Blueprint configuration](https://render.com/docs/blueprint-spec)
-- [Render persistent disks](https://render.com/docs/disks)
-- [Node.js SQLite API](https://nodejs.org/api/sqlite.html)
-- [Zoom server-to-server OAuth](https://developers.zoom.us/docs/internal-apps/s2s-oauth/)
+## Security and data
 
-No open-source license has been selected for your project. Choose one before distributing the repository under open-source terms.
+Secrets stay in Cloudflare runtime settings and are never included in public assets. The app refuses bookings until a strong admin secret has been set. Sessions use random tokens, HttpOnly/SameSite cookies, 12-hour expiry and CSRF checks. Changing the Cloudflare admin secret invalidates existing sessions. Rate limits survive Worker restarts. A high-entropy password is required; use the generated password or a password manager.
+
+Only the authenticated admin can retrieve names, email addresses, topics and private notes. Public availability contains times only. The token in a client's confirmation URL grants access to that appointment's status and Zoom join URL; it should stay private. The database stores a hash of that token.
+
+New deployments start with a new calendar database. Data from the earlier hosted Site, Node server, or Render is not imported automatically. Do not delete the Worker or change its database identity to make routine updates. Back up your data as described in [CLOUDFLARE.md](docs/CLOUDFLARE.md).
+
+The app is designed for one host's calendar. Account deployment and live Zoom authorization must be completed in your accounts. Local tests do not prove that your account configuration is correct; follow the short two-browser check in START-HERE after deployment.
+
+No open-source license has been selected. Choose one before distributing under open-source terms.

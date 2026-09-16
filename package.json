@@ -1,16 +1,22 @@
 {
   "name": "agrim-consultation-booking",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "private": true,
-  "description": "Consultation booking, private notes and live availability. Portable Node.js server with SQLite.",
+  "description": "Consultation booking with free Cloudflare hosting, persistent SQLite and live updates.",
   "type": "module",
   "engines": { "node": ">=24 <25" },
   "scripts": {
     "setup": "node scripts/setup.mjs",
     "start": "node --env-file-if-exists=.env server/index.mjs",
-    "dev": "node --watch --env-file-if-exists=.env server/index.mjs",
+    "dev": "wrangler dev",
+    "dev:node": "node --watch --env-file-if-exists=.env server/index.mjs",
+    "setup:free": "node scripts/setup-free.mjs",
+    "deploy": "wrangler deploy",
+    "deploy:check": "wrangler deploy --dry-run --outdir .worker-build",
+    "test:free": "npm run deploy:check && node --test tests/cloudflare.test.mjs",
     "check": "node scripts/check.mjs",
-    "test": "node --test tests/*.test.mjs",
+    "test": "npm run deploy:check && node --test tests/*.test.mjs",
     "backup": "node --env-file-if-exists=.env scripts/backup.mjs"
-  }
+  },
+  "devDependencies": { "wrangler": "4.131.1", "miniflare": "5.20260911.0-alpha" }
 }
